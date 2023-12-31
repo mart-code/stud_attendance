@@ -117,149 +117,104 @@
         </div>
       </div>
     </div>
-    <!-- Student Table -->
-    <div class="container mt-5">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Department</th>
-            <th>Email</th>
-            <th>Matric No</th>
-            <th>Absent</th>
-            <th>Present</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="studentTable">
-          <!-- Student data will be inserted here -->
-        </tbody>
-      </table>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.3/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/8.8.1/firebase-app.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/8.8.1/firebase-database.min.js"></script>
-    <script src="./main.js"></script>
-    <script>
-      // Listen for form submission
-      document
-        .getElementById("studentForm")
-        .addEventListener("click", function (e) {
-          e.preventDefault();
-          // Save form data to Firebase
-          var studentData = {
-            name: document.getElementById("name").value,
-            matricNo: document.getElementById("matricNo").value,
-            email: document.getElementById("email").value,
-            department: document.getElementById("department").value,
-            attendancePercentage: 0,
-            absentPercentage: 0,
-          };
+  <!-- ... (previous HTML content) ... -->
 
-          // Query the database for students with the same name
-          var query = database
-            .ref("students")
-            .orderByChild("name")
-            .equalTo(studentData.name);
-          query.once("value", function (snapshot) {
-            if (snapshot.exists()) {
-              // If a student with the same name exists, update the student's data
-              var id = Object.keys(snapshot.val())[0];
-              database
-                .ref("students/" + id)
-                .update(studentData)
-                .then(() => {
-                  alert("Student data updated successfully!");
-                  window.location.href = "./index.html";
-                });
-            } else {
-              // If no student with the same name exists, add a new student
-              database
-                .ref("students/" + Math.random().toString(36).substring(7))
-                .set(studentData)
-                .then(() => {
-                  alert("Student data saved successfully!");
-                  window.location.href = "./index.html";
-                });
-            }
-          });
-        });
+<!-- Student Table -->
+<div class="container mt-5">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Matric</th>
+        <th>Class Held</th>
+        <th>Attend</th>
+        <th>Present</th>
+        <th>Absent</th>
 
-      // Listen for changes in the database
-      database.ref("students").on("value", function (snapshot) {
-        var students = snapshot.val();
-        var studentTable = document.getElementById("studentTable");
-        studentTable.innerHTML = "";
-        for (var id in students) {
-          var student = students[id];
-          var row = studentTable.insertRow();
-          row.insertCell(0).innerText = student.name;
-          row.insertCell(1).innerText = student.department;
-          row.insertCell(2).innerText = student.email;
-          row.insertCell(3).innerText = student.matricNo;
-          row.insertCell(4).innerText = student.absentPercentage;
-          row.insertCell(5).innerText = student.attendancePercentage;
-          var actionsCell = row.insertCell(6);
-          actionsCell.innerHTML =
-            '<button class="btn btn-primary" onclick="editStudent(\'' +
-            id +
-            '\')">Edit</button> <button class="btn btn-danger" onclick="deleteStudent(\'' +
-            id +
-            "')\">Delete</button>";
-        }
-      });
+      </tr>
+    </thead>
+    <tbody id="studentTable">
+      <!-- Student data will be inserted here -->
+    </tbody>
+  </table>
+</div>
 
-      function editStudent(id) {
-        // Get the student data from the database
-        database
-          .ref("students/" + id)
-          .once("value")
-          .then(function (snapshot) {
-            var student = snapshot.val();
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.3/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/8.8.1/firebase-app.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/8.8.1/firebase-database.min.js"></script>
+<script src="./main.js"></script>
+<script>
+  // Initialize Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCRoCdQRvcbDNhb9oqxpESL0aPacape1zo",
+  authDomain: "attendance-system-4003e.firebaseapp.com",
+  databaseURL: "https://attendance-system-4003e-default-rtdb.firebaseio.com",
+  projectId: "attendance-system-4003e",
+  storageBucket: "attendance-system-4003e.appspot.com",
+  messagingSenderId: "39359822173",
+  appId: "1:39359822173:web:01b4b5bde13bd5433e10b4",
+  };
+  firebase.initializeApp(firebaseConfig);
 
-            // Pre-fill the form with the student data
-            document.getElementById("name").value = student.name;
-            document.getElementById("matricNo").value = student.matricNo;
-            document.getElementById("email").value = student.email;
-            document.getElementById("department").value = student.department;
+  // Reference to the Firebase Realtime Database
+  const db = firebase.database();
+  const attendanceRef = db.ref("attendance");
 
-            // Show the modal
-            $("#studentModal").modal("show");
-          });
-      }
+  // Function to update the table with data from Firebase
+  function updateTable(snapshot) {
+    const studentTable = document.getElementById("studentTable");
+    studentTable.innerHTML = ""; // Clear existing table data
 
-      // Delete a student
-      function deleteStudent(id) {
-        database.ref("students/" + id).remove();
-      }
+    snapshot.forEach((childSnapshot) => {
+      const {
 
-      function calculateAttendance(studentId) {
-        var totalClasses = 0;
-        var attendedClasses = 0;
+        matric,
+        classHeld,
+        attend,
+        present,
+        absent,
+      } = childSnapshot.val();
 
-        // Listen for changes in the database
-        database.ref("classes").on("value", function (snapshot) {
-          var classes = snapshot.val();
-          for (var classId in classes) {
-            var classData = classes[classId];
-            totalClasses++;
-            if (classData.present && classData.present.includes(studentId)) {
-              attendedClasses++;
-            }
-          }
-          var absentPercentage =
-            ((totalClasses - attendedClasses) / totalClasses) * 100;
-          // Calculate percentage of attendance
-          var attendancePercentage = (attendedClasses / totalClasses) * 100;
+      // Create a new table row
+      const row = document.createElement("tr");
 
-          // Update the student's details in the database
-          database.ref("students/" + studentId).update({
-            attendancePercentage: attendancePercentage,
-            absentPercentage: absentPercentage,
-          });
-        });
-      }
-    </script>
+      // Add data to the row
+ 
+
+      const matricCell = document.createElement("td");
+      matricCell.textContent = matric;
+      row.appendChild(matricCell);
+
+      const classHeldCell = document.createElement("td");
+      classHeldCell.textContent = classHeld;
+      row.appendChild(classHeldCell);
+
+      const attendCell = document.createElement("td");
+      attendCell.textContent = attend;
+      row.appendChild(attendCell);
+
+      const presentCell = document.createElement("td");
+      presentCell.textContent = present;
+      row.appendChild(presentCell);
+
+      const absentCell = document.createElement("td");
+      absentCell.textContent = absent;
+      row.appendChild(absentCell);
+
+      // You can add more cells as needed for your data
+
+      // Add the row to the table
+      studentTable.appendChild(row);
+    });
+  }
+
+  // Listen for changes in the attendanceRef and update the table
+  attendanceRef.on("value", (snapshot) => {
+    updateTable(snapshot);
+  });
+</script>
+</body>
+</html>
+
   </body>
 </html>
