@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance Management System</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.3/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">Student Management</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active">
+            <a class="nav-link" href="./index.html">Attendance</a>
+          </li>
+          <!-- <li class="nav-item">
+            <a class="nav-link" href="./classes.html">Classes</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="./report.html">Reports</a>
+          </li> -->
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Button trigger modal -->
+    <button
+      type="button"
+      class="btn btn-primary"
+      data-toggle="modal"
+      data-target="#studentModal"
+    >
+      Add Student
+    </button>
+
+    <!-- Student Registration Modal -->
+    <div
+      class="modal fade"
+      id="studentModal"
+      tabindex="-1"
+      aria-labelledby="studentModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="studentModalLabel">Add Student</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form>
+              <div class="form-group">
+                <label for="name">Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="name"
+                  placeholder="Enter name"
+                />
+              </div>
+              <div class="form-group">
+                <label for="matricNo">Matric No</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="matricNo"
+                  placeholder="Enter matric no"
+                />
+              </div>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  id="email"
+                  placeholder="Enter email"
+                />
+              </div>
+              <div class="form-group">
+                <label for="department">Department</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="department"
+                  placeholder="Enter department"
+                />
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="studentForm">
+                Submit
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Student Table -->
+    <div class="container mt-5">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Email</th>
+            <th>Matric No</th>
+            <th>Absent</th>
+            <th>Present</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="studentTable">
+          <!-- Student data will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.3/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/8.8.1/firebase-app.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/8.8.1/firebase-database.min.js"></script>
+    <script src="./main.js"></script>
+    <script>
+      // Listen for form submission
+      document
+        .getElementById("studentForm")
+        .addEventListener("click", function (e) {
+          e.preventDefault();
+          // Save form data to Firebase
+          var studentData = {
+            name: document.getElementById("name").value,
+            matricNo: document.getElementById("matricNo").value,
+            email: document.getElementById("email").value,
+            department: document.getElementById("department").value,
+            attendancePercentage: 0,
+            absentPercentage: 0,
+          };
+
+          // Query the database for students with the same name
+          var query = database
+            .ref("students")
+            .orderByChild("name")
+            .equalTo(studentData.name);
+          query.once("value", function (snapshot) {
+            if (snapshot.exists()) {
+              // If a student with the same name exists, update the student's data
+              var id = Object.keys(snapshot.val())[0];
+              database
+                .ref("students/" + id)
+                .update(studentData)
+                .then(() => {
+                  alert("Student data updated successfully!");
+                  window.location.href = "./index.html";
+                });
+            } else {
+              // If no student with the same name exists, add a new student
+              database
+                .ref("students/" + Math.random().toString(36).substring(7))
+                .set(studentData)
+                .then(() => {
+                  alert("Student data saved successfully!");
+                  window.location.href = "./index.html";
+                });
+            }
+          });
+        });
+
+      // Listen for changes in the database
+      database.ref("students").on("value", function (snapshot) {
+        var students = snapshot.val();
+        var studentTable = document.getElementById("studentTable");
+        studentTable.innerHTML = "";
+        for (var id in students) {
+          var student = students[id];
+          var row = studentTable.insertRow();
+          row.insertCell(0).innerText = student.name;
+          row.insertCell(1).innerText = student.department;
+          row.insertCell(2).innerText = student.email;
+          row.insertCell(3).innerText = student.matricNo;
+          row.insertCell(4).innerText = student.absentPercentage;
+          row.insertCell(5).innerText = student.attendancePercentage;
+          var actionsCell = row.insertCell(6);
+          actionsCell.innerHTML =
+            '<button class="btn btn-primary" onclick="editStudent(\'' +
+            id +
+            '\')">Edit</button> <button class="btn btn-danger" onclick="deleteStudent(\'' +
+            id +
+            "')\">Delete</button>";
+        }
+      });
+
+      function editStudent(id) {
+        // Get the student data from the database
+        database
+          .ref("students/" + id)
+          .once("value")
+          .then(function (snapshot) {
+            var student = snapshot.val();
+
+            // Pre-fill the form with the student data
+            document.getElementById("name").value = student.name;
+            document.getElementById("matricNo").value = student.matricNo;
+            document.getElementById("email").value = student.email;
+            document.getElementById("department").value = student.department;
+
+            // Show the modal
+            $("#studentModal").modal("show");
+          });
+      }
+
+      // Delete a student
+      function deleteStudent(id) {
+        database.ref("students/" + id).remove();
+      }
+
+      function calculateAttendance(studentId) {
+        var totalClasses = 0;
+        var attendedClasses = 0;
+
+        // Listen for changes in the database
+        database.ref("classes").on("value", function (snapshot) {
+          var classes = snapshot.val();
+          for (var classId in classes) {
+            var classData = classes[classId];
+            totalClasses++;
+            if (classData.present && classData.present.includes(studentId)) {
+              attendedClasses++;
+            }
+          }
+          var absentPercentage =
+            ((totalClasses - attendedClasses) / totalClasses) * 100;
+          // Calculate percentage of attendance
+          var attendancePercentage = (attendedClasses / totalClasses) * 100;
+
+          // Update the student's details in the database
+          database.ref("students/" + studentId).update({
+            attendancePercentage: attendancePercentage,
+            absentPercentage: absentPercentage,
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
