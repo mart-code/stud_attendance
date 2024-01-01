@@ -23,7 +23,7 @@ const publicPath = path.join(__dirname, "public");
 app.use(express.json()); // Middleware to parse JSON requests
 
 // Handle POST requests from Arduino
-app.post("/uploadData", (req, res) => {
+app.post("/", (req, res) => {
   // Extract data from the request (matric, class, attendance, etc.)
   const { matric, classHeld, attend, present, absent } = req.body;
 
