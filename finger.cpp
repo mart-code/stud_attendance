@@ -1,13 +1,3 @@
-// Inside your Arduino code where attendance data is ready
-void sendData() {
-  String url = "https://stud-attendance.onrender.com/uploadData";
-  url += "?matric=" + matric + "&classHeld=" + nClass + "&attend=" + nAttend;
-  url += "&present=" + nPresent + "&absent=" + nAbsent;
-  
-  // Make HTTP POST request to the server
-  // Use the appropriate library for HTTP requests on Arduino
-}
-
 
 #include <Adafruit_Fingerprint.h>
 #include <SoftwareSerial.h>
@@ -197,39 +187,46 @@ void trigMsg() {
   lcd.print(nAbsent, 0);  lcd.print("%");
 }
 
-void sendData(){
-  String url = "";
-  url = String(matric) + "&classheld=" + String(nClass) + "&attend=" + String(nAttend);
-  url += "&present=" + String(nPresent, 0) + "&absent=" + String(nAbsent, 0) + "\"\r\n";
+void sendData() {
+  String url = "https://stud-attendance.onrender.com/";
+  url += "?matric=" + String(matric) + "&classheld=" + String(nClass) + "&attend=" + String(nAttend);
+  url += "&present=" + String(nPresent, 0) + "&absent=" + String(nAbsent, 0);
 
-//  Serial.print(url);
-
-  Serial.println("AT+CGATT=1\r\n");  delay(100);
-  Serial.println("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r\n");  delay(2000);
-
-  // Serial.println("AT+SAPBR=3,1,\"APN\",\"internet.ng.airtel.com\"\r\n");
+  Serial.println("AT+CGATT=1\r\n");
+  delay(100);
+  Serial.println("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r\n");
+  delay(2000);
   Serial.println("AT+SAPBR=3,1,\"APN\",\"web.gprs.mtnnigeria.net\"\r\n");
-  // Serial.println("AT+SAPBR=3,1,\"APN\",\"glosecure\"\r\n");
-  delay(4000);  lcd.clear();
-  
-  Serial.println("AT+SAPBR=1,1\r\n");  delay(2000);
+  delay(4000);
+  lcd.clear();
+  Serial.println("AT+SAPBR=1,1\r\n");
+  delay(2000);
 
-  Serial.print("AT+HTTPINIT\r\n");  delay(2000);
-  
-  Serial.print("AT+HTTPPARA=\"CID\",1\r\n");  delay(2000);
-  
-  Serial.print("AT+HTTPPARA=\"URL\",\"http://aypteksolutions.com.ng/iot/");
-  Serial.print("classattendance/ClassSend.php?studentid=");
-  Serial.print(url);  delay(2000);
+  Serial.print("AT+HTTPINIT\r\n");
+  delay(2000);
 
-  Serial.println("AT+HTTPACTION=0\r\n");  //submit the request
+  Serial.print("AT+HTTPPARA=\"CID\",1\r\n");
+  delay(2000);
+
+  // Ensure to close the previous URL before opening a new one
+  Serial.println("AT+HTTPTERM\r\n");
+  delay(300);
+
+  Serial.print("AT+HTTPPARA=\"URL\",\"");
+  Serial.print(url);
+  Serial.println("\"\r\n");
+  delay(2000);
+
+  Serial.println("AT+HTTPACTION=0\r\n"); // submit the request
   delay(10000);
 
-  //  Serial.println("AT+HTTPREAD");  delay(100);  //toSerial()
-  Serial.print("AT+HTTPTERM\r\n");  delay(300);
-  
-  lcd.print(" Data Uploading ");  lcd.clear();
+  Serial.print("AT+HTTPTERM\r\n");
+  delay(300);
+
+  lcd.print(" Data Uploading ");
+  lcd.clear();
 }
+
 
 void loop(){                     // run over and over again
   key = myKeypad.getKey();  authorized=0;  clockIn();

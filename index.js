@@ -25,7 +25,7 @@ app.use(express.json()); // Middleware to parse JSON requests
 // Handle POST requests from Arduino
 app.post("/", (req, res) => {
   // Extract data from the request (matric, class, attendance, etc.)
-  const { matric, classHeld, attend, present, absent } = req.body;
+  const { matric, classheld, attend, present, absent } = req.body;
 
   // Create a reference to the Firebase Realtime Database
   const db = firebase.database();
@@ -35,7 +35,7 @@ app.post("/", (req, res) => {
   const newAttendanceEntry = attendanceRef.push();
   newAttendanceEntry.set({
     matric,
-    classHeld,
+    classheld,
     attend,
     present,
     absent,
