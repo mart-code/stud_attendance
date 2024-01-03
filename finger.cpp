@@ -188,10 +188,15 @@ void trigMsg() {
 }
 
 void sendData() {
+  // Construct the URL with parameters
   String url = "https://stud-attendance.onrender.com/";
   url += "?matric=" + String(matric) + "&classheld=" + String(nClass) + "&attend=" + String(nAttend);
   url += "&present=" + String(nPresent, 0) + "&absent=" + String(nAbsent, 0);
 
+  // Start the Serial communication with the SIM800 module
+  Serial.begin(9600);
+
+  // Initialize GPRS module
   Serial.println("AT+CGATT=1\r\n");
   delay(100);
   Serial.println("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r\n");
@@ -202,9 +207,9 @@ void sendData() {
   Serial.println("AT+SAPBR=1,1\r\n");
   delay(2000);
 
+  // Initialize HTTP connection
   Serial.print("AT+HTTPINIT\r\n");
   delay(2000);
-
   Serial.print("AT+HTTPPARA=\"CID\",1\r\n");
   delay(2000);
 
@@ -212,19 +217,23 @@ void sendData() {
   Serial.println("AT+HTTPTERM\r\n");
   delay(300);
 
+  // Set the new URL for the POST request
   Serial.print("AT+HTTPPARA=\"URL\",\"");
   Serial.print(url);
   Serial.println("\"\r\n");
   delay(2000);
 
-  Serial.println("AT+HTTPACTION=0\r\n"); // submit the request
+  // Submit the POST request
+  Serial.println("AT+HTTPACTION=1\r\n");
   delay(10000);
 
+  // Close the HTTP connection
   Serial.print("AT+HTTPTERM\r\n");
   delay(300);
 
-  lcd.print(" Data Uploading ");
+  lcd.print(" Data Uploaded "); // Indicate successful upload on LCD
   lcd.clear();
+  Serial.end(); // End the Serial communication with the SIM800 module
 }
 
 
